@@ -20,8 +20,8 @@ const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 //change the PIN to device
 const nrf_drv_twi_config_t twi_acc_config =
 {
-    .scl                = 12,
-    .sda                = 16,
+    .scl                = 9,
+    .sda                = 6,
     .frequency          = NRF_DRV_TWI_FREQ_400K,
     .interrupt_priority = APP_IRQ_PRIORITY_HIGH,
     .clear_bus_init     = true,
@@ -67,6 +67,23 @@ void makeSureOHMReset(void)
     }
 }
 
+ /* Number of possible TWI addresses. */
+ #define TWI_ADDRESSES      127
+void twi_scan()
+{
+    uint8_t address;
+    uint8_t sample_data;
+
+    for (address = 1; address <= TWI_ADDRESSES; address++)
+    {
+        int err_code = nrf_drv_twi_rx(&m_twi, address, &sample_data, sizeof(sample_data));
+        if (err_code == NRF_SUCCESS)
+        {
+            NRF_LOG_INFO("TWI device detected at address 0x%x.", address);
+            NRF_LOG_FLUSH();
+        }
+    }
+}
 
 /**
  * @brief Function for main application entry.
@@ -82,6 +99,8 @@ int main(void)
     uint32_t err_code = nrf_drv_twi_init(&m_twi, &twi_acc_config, NULL, NULL);
     APP_ERROR_CHECK(err_code);
     nrf_drv_twi_enable(&m_twi);
+
+    twi_scan();
 
     //reset device (option)
     makeSureOHMReset();
